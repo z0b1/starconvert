@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, ChangeEvent } from 'react';
+import React, { useState, useEffect, useRef, ChangeEvent } from 'react';
 import { FFmpeg } from '@ffmpeg/ffmpeg';
 import { fetchFile } from '@ffmpeg/util';
 import { heicTo } from 'heic-to';
@@ -11,7 +11,13 @@ export default function Home() {
   const [status, setStatus] = useState<string>('Idle');
   const [downloadUrl, setDownloadUrl] = useState<string>('');
   
-  const ffmpegRef = useRef<FFmpeg>(new FFmpeg());
+  // 1. Maintain a ref for FFmpeg, but initialize it as null
+  const ffmpegRef = useRef<FFmpeg | null>(null);
+
+  // 2. Safely instantiate FFmpeg only once the browser has loaded the component
+  useEffect(() => {
+    ffmpegRef.current = new FFmpeg();
+  }, []);
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -31,7 +37,7 @@ export default function Home() {
   };
 
   const convertFile = async (): Promise<void> => {
-    if (!file) return;
+    if (!file || !ffmpegRef.current) return;
     setStatus('Processing inside your browser...');
     
     const inputExt = file.name.split('.').pop()?.toLowerCase() || '';
@@ -70,22 +76,17 @@ export default function Home() {
       if (targetFormat === 'mp3') mimeType = 'audio/mp3';
       if (targetFormat === 'mp4') mimeType = 'video/mp4';
 
- // Safe structural buffer conversion for strict browser Blob engines
-let dataBuffer: BlobPart;
-if (typeof data === 'string') {
-  dataBuffer = new TextEncoder().encode(data);
-} else {
-  // We extract the binary stream and explicitly cast it away from SharedArrayBuffer unions
-  const rawBuffer = data.buffer as ArrayBuffer;
-  dataBuffer = new Uint8Array(rawBuffer);
-}
+      // Safe structural buffer conversion for strict browser Blob engines
+      let dataBuffer: BlobPart;
+      if (typeof data === 'string') {
+        dataBuffer = new TextEncoder().encode(data);
+      } else {
+        const rawBuffer = data.buffer as ArrayBuffer;
+        dataBuffer = new Uint8Array(rawBuffer);
+      }
 
-setDownloadUrl(URL.createObjectURL(new Blob([dataBuffer], { type: mimeType })));
-setStatus('Conversion complete!');
-
-
-setDownloadUrl(URL.createObjectURL(new Blob([dataBuffer], { type: mimeType })));
-setStatus('Conversion complete!');
+      setDownloadUrl(URL.createObjectURL(new Blob([dataBuffer], { type: mimeType })));
+      setStatus('Conversion complete!');
     } catch (error) {
       console.error('Error during conversion:', error);
       setStatus('Error during conversion. Please check the console for details.');
@@ -93,17 +94,16 @@ setStatus('Conversion complete!');
   };
 
   return (
- 
-<main style={{ 
-  minHeight: '100vh', 
-  backgroundColor: '#020617', 
-  color: '#fff', 
-  display: 'flex', 
-  alignItems: 'center', 
-  justifyContent: 'center', // 🌟 Capitalized "C" fixes the type error completely
-  padding: '24px', 
-  fontFamily: 'sans-serif' 
-}}>
+    <main style={{ 
+      minHeight: '100vh', 
+      backgroundColor: '#020617', 
+      color: '#fff', 
+      display: 'flex', 
+      alignItems: 'center', 
+      justifyContent: 'center', 
+      padding: '24px', 
+      fontFamily: 'sans-serif' 
+    }}>
       <div style={{ maxWidth: '400px', width: '100%', padding: '24px', backgroundColor: '#0f172a', borderRadius: '12px', border: '1px solid rgba(244, 63, 94, 0.3)', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5)', margin: 'auto' }}>
         <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: '#f43f5e', borderBottom: '1px solid #334155', paddingBottom: '12px', margin: '0 0 16px 0' }}>🌌 StarConvert.wasm</h2>
         
