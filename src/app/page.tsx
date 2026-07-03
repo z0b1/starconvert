@@ -438,7 +438,6 @@ export default function Home() {
       }}>
         YOUR FILES NEVER LEAVE THIS DEVICE<br />
         <span style={{ color: '#1e1a40' }}>POWERED BY FFMPEG.WASM + WEBASSEMBLY</span>
-        <span style={{ display: 'block', marginTop: '6px' }}>MADE WITH ♥ BY HACK CLUB</span>
         <span style={{ display: 'block', marginTop: '6px' }}>STARCONVERT 2026 BY <a href="https://github.com/z0b1" target="_blank" rel="noopener noreferrer" style={{ color: '#1e1a40', textDecoration: 'underline' }}>z0b1</a></span>
       </div>
 
