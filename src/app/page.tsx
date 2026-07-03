@@ -12,6 +12,9 @@ export default function Home() {
   const [downloadUrl, setDownloadUrl] = useState<string>('');
   const [isConverting, setIsConverting] = useState<boolean>(false);
   const ffmpegRef = useRef<FFmpeg | null>(null);
+  
+  // State to hold the final rendered string hook
+  const [commitMessage, setCommitMessage] = useState<string>('local development staging');
 
   const [stars, setStars] = useState<Array<{
     id: number; top: string; left: string;
@@ -28,6 +31,12 @@ export default function Home() {
       delay: `${Math.random() * 6}s`,
       duration: `${Math.random() * 4 + 3}s`,
     })));
+
+    // Safely reads the dataset attribute passed down from the root layout container
+    const embeddedCommit = document.documentElement.getAttribute('data-commit');
+    if (embeddedCommit) {
+      setCommitMessage(embeddedCommit);
+    }
   }, []);
 
   useEffect(() => {
@@ -109,15 +118,14 @@ export default function Home() {
       await ffmpeg.writeFile(inputName, await fetchFile(file));
       setStatus('Converting...');
 
-      // Build dynamic WebAssembly execution array to tightly control memory budgets
       let execArgs = ['-i', inputName];
 
       if (targetFormat === 'webp') {
         execArgs.push(
           '-c:v', 'libwebp',
-          '-compression_level', '2', // Low latency mapping parameters
-          '-preset', 'picture',       // Disables deep structural color analysis matrices
-          '-threads', '1'             // Blocks massive worker heap scaling allocations
+          '-compression_level', '2',
+          '-preset', 'picture',       
+          '-threads', '1'             
         );
       } else {
         execArgs.push('-threads', '1');
@@ -125,7 +133,6 @@ export default function Home() {
 
       execArgs.push(outputName);
 
-      // Trigger the compiled conversion routine
       await ffmpeg.exec(execArgs);
 
       setStatus('Finalizing...');
@@ -143,19 +150,16 @@ export default function Home() {
       setDownloadUrl(URL.createObjectURL(new Blob([dataBuffer], { type: mimeType })));
       setStatus('Conversion complete!');
 
-      // Clean up local system virtual allocations cleanly after successful execution
       await ffmpeg.deleteFile(inputName);
       await ffmpeg.deleteFile(outputName);
 
     } catch (error) {
       console.error('Conversion error:', error);
       
-      // Handle the strict WebAssembly Memory Boundary Violation Panic
       if (error instanceof Error && error.message.includes('bounds')) {
         setStatus('Error: WASM memory limits exceeded. Re-initializing engine container...');
         try {
           if (ffmpegRef.current) {
-            // Force fully reloading the assets to cleanly wipe and rebuild the virtual thread space
             await ffmpegRef.current.load();
             setStatus('Engine recovered! Please try again with a smaller image asset.');
           }
@@ -277,7 +281,7 @@ export default function Home() {
               WASM · CLIENT-SIDE · NO UPLOADS
             </div>
           </div>
-          <div style={{ marginLeft: 'auto', fontSize: '20px', lineHeight: 1 }}>🌙</div>
+          <div style={{ marginLeft: 'auto', fontSize: '20px', lineHeight: 1 }}><img src="/sna.png" alt="Single neuron activated" /></div>
         </div>
 
         <div style={{ padding: '26px' }}>
@@ -474,7 +478,14 @@ export default function Home() {
       }}>
         YOUR FILES NEVER LEAVE THIS DEVICE<br />
         <span style={{ color: '#1e1a40' }}>POWERED BY FFMPEG.WASM + WEBASSEMBLY</span>
-        <span style={{ display: 'block', marginTop: '6px' }}>STARCONVERT 2026 BY <a href="https://github.com/z0b1" target="_blank" rel="noopener noreferrer" style={{ color: '#1e1a40', textDecoration: 'underline' }}>z0b1</a></span>
+        <span style={{ display: 'block', marginTop: '6px' }}>
+          STARCONVERT 2026 BY <a href="https://github.com/z0b1" target="_blank" rel="noopener noreferrer" style={{ color: '#1e1a40', textDecoration: 'underline' }}>z0b1</a>
+          {commitMessage && (
+            <span style={{ display: 'block', color: '#161432', fontSize: '9px', marginTop: '4px', textTransform: 'none' }}>
+              📡 deployment: "{commitMessage}"
+            </span>
+          )}
+        </span>
       </div>
 
     </main>
