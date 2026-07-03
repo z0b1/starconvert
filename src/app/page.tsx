@@ -71,6 +71,8 @@ export default function Home() {
     setStatus('Processing in your browser...');
 
     const inputExt = file.name.split('.').pop()?.toLowerCase() ?? '';
+    const inputName = `input.${inputExt}`;
+    const outputName = `output.${targetFormat}`;
 
     try {
       if (inputExt === 'heic') {
@@ -90,27 +92,41 @@ export default function Home() {
       const ffmpeg = ffmpegRef.current;
 
       if (!ffmpeg.loaded) {
-  setStatus('Loading FFmpeg WebAssembly...');
-  ffmpeg.on('log', ({ message }) => {
-    console.log('[ffmpeg]', message);
-  });
+        setStatus('Loading FFmpeg WebAssembly...');
+        ffmpeg.on('log', ({ message }) => {
+          console.log('[ffmpeg]', message);
+        });
 
-  // Convert the local public paths into absolute Blob URLs
-  const coreURL = await toBlobURL('/ffmpeg/ffmpeg-core.js', 'text/javascript');
-  const wasmURL = await toBlobURL('/ffmpeg/ffmpeg-core.wasm', 'application/wasm');
+        const coreURL = await toBlobURL('/ffmpeg/ffmpeg-core.js', 'text/javascript');
+        const wasmURL = await toBlobURL('/ffmpeg/ffmpeg-core.wasm', 'application/wasm');
 
-  // Load using the generated blobs
-  await ffmpeg.load({
-    coreURL,
-    wasmURL,
-  });
-}
-      const inputName = `input.${inputExt}`;
-      const outputName = `output.${targetFormat}`;
+        await ffmpeg.load({
+          coreURL,
+          wasmURL,
+        });
+      }
 
       await ffmpeg.writeFile(inputName, await fetchFile(file));
       setStatus('Converting...');
-      await ffmpeg.exec(['-threads', '1', '-i', inputName, outputName]);
+
+      // Build dynamic WebAssembly execution array to tightly control memory budgets
+      let execArgs = ['-i', inputName];
+
+      if (targetFormat === 'webp') {
+        execArgs.push(
+          '-c:v', 'libwebp',
+          '-compression_level', '2', // Low latency mapping parameters
+          '-preset', 'picture',       // Disables deep structural color analysis matrices
+          '-threads', '1'             // Blocks massive worker heap scaling allocations
+        );
+      } else {
+        execArgs.push('-threads', '1');
+      }
+
+      execArgs.push(outputName);
+
+      // Trigger the compiled conversion routine
+      await ffmpeg.exec(execArgs);
 
       setStatus('Finalizing...');
       const data = await ffmpeg.readFile(outputName);
@@ -126,13 +142,33 @@ export default function Home() {
 
       setDownloadUrl(URL.createObjectURL(new Blob([dataBuffer], { type: mimeType })));
       setStatus('Conversion complete!');
+
+      // Clean up local system virtual allocations cleanly after successful execution
+      await ffmpeg.deleteFile(inputName);
+      await ffmpeg.deleteFile(outputName);
+
     } catch (error) {
       console.error('Conversion error:', error);
-      setStatus(
-        error instanceof Error
-          ? `Error: ${error.message}`
-          : 'Conversion failed. Check the console.'
-      );
+      
+      // Handle the strict WebAssembly Memory Boundary Violation Panic
+      if (error instanceof Error && error.message.includes('bounds')) {
+        setStatus('Error: WASM memory limits exceeded. Re-initializing engine container...');
+        try {
+          if (ffmpegRef.current) {
+            // Force fully reloading the assets to cleanly wipe and rebuild the virtual thread space
+            await ffmpegRef.current.load();
+            setStatus('Engine recovered! Please try again with a smaller image asset.');
+          }
+        } catch (reloadErr) {
+          setStatus('Failed to clear memory sandbox. Please reload your browser page tab.');
+        }
+      } else {
+        setStatus(
+          error instanceof Error
+            ? `Error: ${error.message}`
+            : 'Conversion failed. Check the console.'
+        );
+      }
     } finally {
       setIsConverting(false);
     }
