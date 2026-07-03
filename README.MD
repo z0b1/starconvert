@@ -7,7 +7,7 @@
 <h2>Demo</h2>
 
 ![Workflow GIF](assets/demo.gif)
-[![Open Live App](https://img.shields.io/badge/🌟_Live_Demo-Click_Here_to_Try-blue?style=for-the-badge&logo=cloudflare&logoColor=white)](https://wasm.z0b1.tech)
+[![Open Live App](https://img.shields.io/badge/🌟-grayClick_Here_to_Try-blue?style=for-the-badge&logo=cloudflare&logoColor=white)](https://wasm.z0b1.tech)
 
 ## Features
 - ### 100% Client-Side Processing
