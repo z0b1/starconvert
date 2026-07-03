@@ -36,9 +36,13 @@ body {
 .card {
   animation: drift 7s ease-in-out infinite, glow-pulse 4s ease-in-out infinite;
 }
+.card:hover {
+  animation: drift 7s ease-in-out infinite, glow-pulse 4s ease-in-out infinite, none;
+}
 
 .convert-btn {
   transition: background-color 0.2s, transform 0.1s;
+  color:#1e1b4b;
 }
 
 .convert-btn:hover:not(:disabled) {
