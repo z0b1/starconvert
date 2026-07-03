@@ -1,3 +1,70 @@
-* {
-    background-color: #f5f5f5;
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: #04050f;
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600&display=swap');
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.15; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.4); }
+}
+
+@keyframes drift {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+  100% { transform: translateY(0px); }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 18px rgba(139, 92, 246, 0.25), 0 20px 40px rgba(0,0,0,0.6); }
+  50% { box-shadow: 0 0 32px rgba(139, 92, 246, 0.45), 0 20px 40px rgba(0,0,0,0.6); }
+}
+
+.star {
+  position: absolute;
+  border-radius: 50%;
+  background: #fff;
+  animation: twinkle var(--dur) var(--delay) ease-in-out infinite;
+}
+
+.card {
+  animation: drift 7s ease-in-out infinite, glow-pulse 4s ease-in-out infinite;
+}
+
+.convert-btn {
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.convert-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.convert-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+input[type="file"]::-webkit-file-upload-button {
+  background: #1e1b4b;
+  color: #a5b4fc;
+  border: 1px solid #4338ca;
+  border-radius: 4px;
+  padding: 4px 10px;
+  cursor: pointer;
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  margin-right: 10px;
+}
+
+select option {
+  background: #0d0b2a;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .star, .card { animation: none; }
 }
